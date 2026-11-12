@@ -1,0 +1,38 @@
+{
+  "name": "dff",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Dogar's Fire & Flavour — offline-first Restaurant Management System, powered by Komyosys",
+  "author": "Komyosys",
+  "homepage": "https://komyosys.com",
+  "keywords": [
+    "restaurant-management",
+    "restaurant-pos",
+    "point-of-sale",
+    "kitchen-display-system",
+    "inventory-management",
+    "self-hosted",
+    "offline-first",
+    "upi-payments",
+    "gst-billing",
+    "restaurant-payroll",
+    "qr-ordering",
+    "nestjs",
+    "nextjs"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.9",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=22"
+  }
+}

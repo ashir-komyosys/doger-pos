@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="220" viewBox="0 0 760 220" fill="none">
+  <rect width="760" height="220" rx="28" fill="#141416"/>
+  <rect x="2" y="2" width="756" height="216" rx="26" stroke="#F4EADB" stroke-opacity=".28" stroke-width="2"/>
+  <circle cx="118" cy="110" r="72" fill="#1D1D21" stroke="#F4EADB" stroke-width="3"/>
+  <circle cx="118" cy="110" r="62" stroke="#B58A61" stroke-opacity=".62" stroke-width="2"/>
+  <path d="M116 166c-20 0-33-13-31-30 1-14 12-21 19-34 2 11 5 15 11 18 0-17 10-31 23-43 0 18 3 26 10 37 5 8 7 14 6 23-2 18-15 29-38 29Z" fill="#EF476F"/>
+  <path d="M117 152c-11 0-18-7-17-16 1-7 6-11 11-18 1 7 4 10 8 12 0-9 6-16 12-22 0 10 7 15 8 23 1 12-8 21-22 21Z" fill="#F3BD69"/>
+  <path d="M117 141c-4 4-5 8-3 13-8-1-12-7-10-13 1-3 3-5 6-9 1 4 3 6 7 9Z" fill="#FFF2D9"/>
+  <text x="224" y="105" fill="#F7F3EB" font-family="Georgia, 'Times New Roman', serif" font-size="68" font-weight="700" letter-spacing="-1">Dogar&apos;s</text>
+  <text x="228" y="157" fill="#D7AF85" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="500" letter-spacing="5">FIRE &amp; FLAVOUR</text>
+  <path d="M228 177h384" stroke="#EF476F" stroke-opacity=".75" stroke-width="3" stroke-linecap="round"/>
+</svg>

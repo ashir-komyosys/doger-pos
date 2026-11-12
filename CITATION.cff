@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use Dogar's Fire & Flavour in research, teaching, or a public project, please cite it."
+type: software
+title: "Dogar's Fire & Flavour"
+authors:
+  - family-names: Komyosys
+    given-names: Team
+    website: https://komyosys.com/
+repository-code: <repository-url>
+url: <website-url>
+license: AGPL-3.0-only
+abstract: "Offline-first, self-hosted restaurant management software with point of sale, tables, kitchen display, reservations, and inventory."

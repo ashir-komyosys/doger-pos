@@ -1,0 +1,130 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nodedr-restaurant-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nodedr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: nodedr_restaurant
+    # The backend uses the internal Docker network. Host access is bound to
+    # loopback for local development and is not reachable from the LAN.
+    expose:
+      - "5432"
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nodedr"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 2s
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      args:
+        APP_VERSION: "${APP_VERSION:-dev}"
+    image: dff-backend:${APP_VERSION:-dev}
+    container_name: nodedr-restaurant-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "${SUPABASE_DATABASE_URL:-postgresql://nodedr:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/nodedr_restaurant}"
+      JWT_SECRET: ${JWT_SECRET:?set a real JWT_SECRET in .env for anything beyond local dev}
+      JWT_EXPIRES_IN: "12h"
+      PORT: "4000"
+      CORS_ORIGIN: "${FRONTEND_ORIGIN:-${CORS_ORIGIN:-http://localhost:2006}}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
+      UPLOADS_DIR: "/data/uploads"
+      # Spain VERI*FACTU (Settings > VERI*FACTU). The producer identifier is a legal fact only the software
+      # producer can supply; leave it unset and the branch reports exactly what is missing. See docs/verifactu.md.
+      VERIFACTU_PRODUCER_ID: "${VERIFACTU_PRODUCER_ID:-}"
+      VERIFACTU_PRODUCER_NAME: "${VERIFACTU_PRODUCER_NAME:-}"
+      VERIFACTU_PRODUCER_COUNTRY: "${VERIFACTU_PRODUCER_COUNTRY:-}"
+      VERIFACTU_SYSTEM_ID: "${VERIFACTU_SYSTEM_ID:-}"
+      SYNC_API_KEY: "${SYNC_API_KEY:-}"
+      # Optional: S3 backup config can also be set from Settings > Backup
+      # (persisted to the `backup_config` DB row, which takes priority over
+      # these). Uncomment for a headless/CasaOS-style deployment that
+      # configures backups purely from env vars instead.
+      # S3_BACKUP_ENDPOINT: "https://s3.example.com"
+      # S3_BACKUP_BUCKET: "orderrestro-backups"
+      # S3_BACKUP_ACCESS_KEY_ID: ""
+      # S3_BACKUP_SECRET_ACCESS_KEY: ""
+      # S3_BACKUP_REGION: "auto"
+      # S3_BACKUP_INTERVAL_DAYS: "3"
+      # S3_BACKUP_RETAIN_COUNT: "2"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Not published to the host — reachable only via the web service's
+    # server-side /api proxy, same reasoning as the sister project (keeps the API
+    # off the LAN, shrinks attack surface).
+    expose:
+      - "4000"
+    volumes:
+      - uploads_data:/data/uploads
+      # Direct-USB thermal printing (see apps/backend/src/modules/orders/
+      # escpos-usb.ts, ported from nodedr-pos's real hardware-verified
+      # transport) needs the backend to see the host's USB device nodes.
+      # Bind-mounting the whole /dev/bus/usb tree (not `devices:` with a
+      # literal path, which only handles nodes that exist at container
+      # start — USB bus/device numbers are dynamic and can renumber on
+      # reconnect) keeps this working across printer unplug/replug without
+      # a restart.
+      - /dev/bus/usb:/dev/bus/usb
+    # Grants read/write/mknod WITHOUT full `privileged: true` on the two
+    # device majors the printer needs, so the backend still can't see or
+    # touch anything else on the host:
+    #   189 — usbfs (/dev/bus/usb/BBB/DDD), used by the libusb transport.
+    #   180 — usblp, the kernel printer driver behind /dev/usb/lp0 — the
+    #         PRIMARY transport (see escpos-usb.ts): the same node a
+    #         working `echo > /dev/usb/lp0` writes to, and the one generic
+    #         vendor-class 80mm printers only expose through the kernel.
+    #         The 'm' (mknod) grant lets the backend create the lp node
+    #         inside the container on demand and write straight through to
+    #         the host kernel's already-bound printer — no host bind mount,
+    #         so nothing fails at `compose up` when no printer is attached.
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+      - 'c 180:* rmw'
+
+  # Run explicitly with `docker compose --profile seed run --rm seed`.
+  # It targets only the local PostgreSQL service by default; seed.ts refuses
+  # remote database URLs unless ALLOW_REMOTE_SEED=true is deliberately set.
+  seed:
+    profiles: ["seed"]
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      target: builder
+    command: ["pnpm", "--filter", "@nodedr-restaurant/backend", "prisma:seed"]
+    environment:
+      DATABASE_URL: "${SUPABASE_DATABASE_URL:-postgresql://nodedr:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/nodedr_restaurant}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Next bakes rewrite destinations at BUILD time — this must be a
+        # build ARG, not a runtime env (see apps/web/Dockerfile comment).
+        BACKEND_URL: "http://backend:4000"
+        NEXT_PUBLIC_PUBLIC_ORDER_TOKEN: "${NEXT_PUBLIC_PUBLIC_ORDER_TOKEN:-}"
+    image: dff-web:${APP_VERSION:-dev}
+    container_name: nodedr-restaurant-web
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-2006}:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:
+  uploads_data:

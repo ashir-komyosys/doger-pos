@@ -1,0 +1,22 @@
+{
+  "name": "Dogar's Fire & Flavour",
+  "short_name": "Dogar's Fire",
+  "description": "Offline-first restaurant management system — POS, tables, kitchen display, menu, inventory. Powered by Komyosys.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#F9F4EA",
+  "theme_color": "#FE8C00",
+  "lang": "en",
+  "categories": ["business", "food", "productivity"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
