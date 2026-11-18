@@ -79,6 +79,7 @@ function PosPageInner() {
     setSelectedBillId(null);
     setTableIdRaw(next);
   };
+  const [cartOpen, setCartOpen] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState<string | null>(preselectedOrderId || null);
   const [pickerItem, setPickerItem] = useState<MenuItem | null>(null);
   const [activeOrder, setActiveOrder] = useState<CreatedOrder | null>(null);
@@ -91,6 +92,7 @@ function PosPageInner() {
   }
   useEffect(() => {
     if (!targetOrder || targetOrder.id !== preselectedOrderId || targetOrder.status !== "OPEN") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOrderType(targetOrder.type as PosOrderType);
     setTableIdRaw(targetOrder.tableId ?? "");
     setSelectedBillId(targetOrder.id);
@@ -125,7 +127,6 @@ function PosPageInner() {
   }, [targetOrder, preselectedOrderId, openPaymentForOrder]);
   // Phones show the menu full-screen and the cart/checkout as an overlay; from
   // lg up both sit side by side and this flag is ignored.
-  const [cartOpen, setCartOpen] = useState(false);
 
   // Mirror the cart to the customer-facing display (/customer-display).
   useEffect(() => {
@@ -444,10 +445,10 @@ function PosPageInner() {
       )}
 
       <div className={cn(
-        "grid min-h-[520px] flex-1 grid-cols-1 gap-4 overflow-visible lg:h-[calc(100dvh-19rem)] lg:overflow-hidden lg:flex-none",
+        "grid min-h-[520px] flex-1 grid-cols-[minmax(0,1fr)_64px] gap-4 overflow-visible lg:h-[calc(100dvh-19rem)] lg:overflow-hidden lg:flex-none",
         showTablePicker && "hidden xl:grid",
         orderType === "DINE_IN"
-          ? "lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_64px_340px] 2xl:grid-cols-[minmax(0,1fr)_72px_370px]"
+          ? "lg:grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)_370px]"
           : "lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_370px]",
       )}>
           <Card className="min-h-0 overflow-hidden border-0 bg-transparent p-0 shadow-none">
@@ -601,3 +602,4 @@ function PosPageInner() {
     </div>
   );
 }
+

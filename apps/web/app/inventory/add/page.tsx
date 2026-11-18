@@ -27,7 +27,7 @@ export default function IngredientAddPage() {
     try {
       toast.success("Ingredient added");
       router.push("/inventory");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Failed to add ingredient");
     }
   };

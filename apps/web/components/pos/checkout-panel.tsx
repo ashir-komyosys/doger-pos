@@ -506,7 +506,7 @@ export function CheckoutPanel({
           {live && <span className="text-xs text-muted-foreground">{live.items.reduce((count, item) => count + item.quantity, 0)} items</span>}
         </div>
         {live ? (
-          <ul className="max-h-52 divide-y divide-border overflow-y-auto">
+          <ul className="flex-1 min-h-0 divide-y divide-border overflow-y-auto">
             {live.items.map((item, index) => (
               <li key={item.id} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
                 <span className="h-12 w-12 shrink-0 rounded-lg bg-card bg-cover" style={menuFoodTile(item.nameSnapshot, index)} aria-hidden="true" />
@@ -754,7 +754,7 @@ export function CheckoutPanel({
         </>
       )}
 
-      <div className="mt-auto flex flex-col gap-3 border-t border-border pt-4">
+      <div className="flex-shrink-0 mt-auto flex flex-col gap-3 border-t border-border pt-4">
         <BillSummary bill={bill} giftCardApplied={giftCardApplied} pending={repricing || billQuery.isFetching} />
 
         <div className="grid grid-cols-2 gap-2">

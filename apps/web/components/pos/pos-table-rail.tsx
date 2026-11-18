@@ -33,7 +33,7 @@ export function PosTableRail({
   const floor = floors.find((candidate) => candidate.id === floorId) ?? floors[0];
 
   return (
-    <aside className="hidden min-h-0 flex-col items-center gap-2 rounded-[1.25rem] border border-border/70 bg-card/70 p-2 xl:flex" aria-label="Choose a table">
+    <aside className="hidden min-h-0 min-w-0 flex-col items-center gap-2 rounded-[1.25rem] border border-border/70 bg-card/70 p-2 xl:flex" aria-label="Choose a table">
       <span className="pt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Tables</span>
 
       {floors.length > 1 && (
