@@ -134,7 +134,7 @@ export function CartPanel({
   const isNewOrderBlocked = !storeIsOpen && !existingOrderNumber;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="pos-cart-panel flex h-full min-h-0 flex-col gap-3">
       <div className="flex items-center justify-between gap-3 px-1 pt-1">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">Dogar&apos;s Fire &amp; Flavour</p>
@@ -148,6 +148,7 @@ export function CartPanel({
         </div>
       </div>
 
+      <div className="pos-cart-scroll pos-scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
       {!existingOrderNumber && (
         <div className="rounded-2xl border border-border/80 bg-background/50 p-3 shadow-sm">
           <CustomerPicker branchId={branchId} customer={customer} onSelect={onCustomerChange} />
@@ -185,7 +186,7 @@ export function CartPanel({
 
       {orderType === "DINE_IN" && (
         <>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="pos-cart-fields grid grid-cols-2 gap-2.5">
           <label className="flex min-w-0 flex-col gap-1.5 text-[11px] font-medium text-muted-foreground">
             Table number
             <Select value={tableId} onValueChange={(v) => onTableChange(v ?? "")}>
@@ -245,7 +246,7 @@ export function CartPanel({
           />
         </label>
       )}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="pos-cart-fields grid grid-cols-2 gap-2.5">
         <label className="flex min-w-0 flex-col gap-1.5 text-[11px] font-medium text-muted-foreground">
           Serving this order
           <Select value={assignedServerId} onValueChange={(value) => onAssignedServerChange(value ?? "")}>
@@ -362,7 +363,7 @@ export function CartPanel({
       )}
 
       {step === "review" ? (
-        <div className="flex-1 overflow-y-auto rounded-xl border border-border p-4">
+        <div className="min-h-32 rounded-xl border border-border p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h3 className="font-semibold text-foreground">Review order</h3>
@@ -378,7 +379,7 @@ export function CartPanel({
           <div className="mt-3 flex justify-between border-t border-border pt-3 text-sm font-semibold"><span>Total</span><span>{formatCurrency(subtotal)}</span></div>
         </div>
       ) : step === "spice" ? (
-        <div className="flex-1 overflow-y-auto rounded-xl border border-border p-4">
+        <div className="min-h-32 rounded-xl border border-border p-4">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h3 className="font-semibold text-foreground">Choose spice levels</h3>
@@ -410,9 +411,9 @@ export function CartPanel({
             ))}
           </div>
         </div>
-      ) : <div className="flex-1 overflow-y-auto">
+      ) : <div className="min-h-24">
         {lines.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+          <div className="flex min-h-36 flex-col items-center justify-center gap-2 text-center text-muted-foreground">
             <ShoppingCart className="h-8 w-8 opacity-40" />
             <p className="text-sm">Cart is empty</p>
           </div>
@@ -477,8 +478,10 @@ export function CartPanel({
           </div>
         )}
       </div>}
+      </div>
 
-      <div className="flex flex-col gap-3 border-t border-border/80 pt-3">
+      <div className="shrink-0 border-t border-border/80 bg-card pt-3">
+        <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Subtotal (tax included)</span>
           <span className="font-bold tabular-nums text-foreground">
@@ -512,6 +515,7 @@ export function CartPanel({
             Reopen the store before confirming a new order. You can still finish existing bills.
           </p>
         )}
+        </div>
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import { BellRing, CheckCircle2, Leaf, Minus, Plus, UtensilsCrossed } from "lucide-react";

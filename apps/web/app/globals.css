@@ -333,6 +333,74 @@
   }
 }
 
+.pos-menu-container {
+  container-name: pos-menu;
+  container-type: inline-size;
+}
+
+.pos-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pos-scrollbar-hidden::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0;
+  height: 0;
+}
+
+.pos-scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(128 105 94 / 35%) transparent;
+}
+
+.pos-scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pos-scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pos-scrollbar-thin::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(128 105 94 / 35%);
+}
+
+.pos-scrollbar-thin::-webkit-scrollbar-button {
+  display: none;
+}
+
+@container pos-menu (min-width: 430px) {
+  .pos-menu-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container pos-menu (min-width: 640px) {
+  .pos-menu-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.pos-cart-panel {
+  container-name: pos-cart;
+  container-type: inline-size;
+}
+
+.pos-cart-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@container pos-cart (max-width: 440px) {
+  .pos-cart-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-slot="card"],
   [data-slot="button"] {

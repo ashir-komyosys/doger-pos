@@ -1,7 +1,7 @@
 "use client";
 
-import { Minus, Plus, Search, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, Minus, Plus, Search, Sparkles } from "lucide-react";
+import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { QueryError } from "@/components/ui/query-error";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +33,7 @@ export function ProductGrid({
   const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>(undefined);
   const [activeSection, setActiveSection] = useState("All");
   const [search, setSearch] = useState("");
+  const categoryRail = useRef<HTMLElement>(null);
   const { data: items, isLoading, isError, error, refetch, isFetching } = useMenuItems(branchId, activeCategoryId);
 
   const matchesSection = (item: MenuItem) => {
@@ -50,7 +51,7 @@ export function ProductGrid({
   const filtered = sectionItems.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <section aria-label="Restaurant menu" className="flex h-full min-h-0 flex-col gap-4">
+    <section aria-label="Restaurant menu" className="pos-menu-container flex h-full min-h-0 flex-col gap-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
@@ -58,7 +59,10 @@ export function ProductGrid({
           </p>
           <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Choose your dishes</h2>
         </div>
-        <label className="relative w-full sm:max-w-[270px]">
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative w-full shrink-0 sm:w-[230px] 2xl:w-[270px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
             placeholder="Search the menu"
@@ -68,10 +72,7 @@ export function ProductGrid({
             aria-label="Search menu items"
           />
         </label>
-      </div>
-
-      <div className="flex flex-col gap-3 border-b border-border/80 pb-3">
-        <div className="flex gap-2 overflow-x-auto pb-0.5" role="group" aria-label="Menu section">
+        <div className="no-scrollbar flex min-w-0 flex-1 flex-wrap gap-2" role="group" aria-label="Menu section">
           {SECTIONS.map((section) => (
             <button
               key={section.label}
@@ -94,8 +95,14 @@ export function ProductGrid({
           ))}
         </div>
 
-        {visibleCategories && visibleCategories.length > 0 && (
-          <nav aria-label="Menu category" className="flex gap-1.5 overflow-x-auto">
+      </div>
+
+      {visibleCategories && visibleCategories.length > 0 && (
+        <div className="flex min-w-0 items-center gap-1 border-b border-border/80 pb-2">
+          <button type="button" aria-label="Scroll categories left" onClick={() => categoryRail.current?.scrollBy({ left: -180, behavior: "smooth" })} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
+          <nav ref={categoryRail} aria-label="Menu category" className="no-scrollbar flex min-w-0 flex-1 gap-1.5 overflow-x-auto scroll-smooth py-0.5">
             <button
               type="button"
               aria-current={activeCategoryId ? undefined : "true"}
@@ -125,29 +132,32 @@ export function ProductGrid({
               );
             })}
           </nav>
-        )}
-      </div>
+          <button type="button" aria-label="Scroll categories right" onClick={() => categoryRail.current?.scrollBy({ left: 180, behavior: "smooth" })} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="pos-scrollbar-hidden min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
         {isError && !items ? (
           <QueryError error={error} what="the menu" onRetry={() => void refetch()} retrying={isFetching} />
         ) : (
-          <div className="grid grid-cols-2 gap-3 pb-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {isLoading && Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-56 rounded-[1.25rem]" />
+          <div className="pos-menu-product-grid grid grid-cols-2 gap-2.5 pb-3 sm:gap-3">
+            {isLoading && Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton key={index} className="h-32 rounded-[1rem]" />
             ))}
             {filtered.map((item, index) => {
               const quantity = quantityForItem(item.id);
               return (
               <article
                 key={item.id}
-                className="group flex min-w-0 flex-col overflow-hidden rounded-[1.25rem] border border-border/80 bg-card text-left shadow-[0_2px_8px_rgba(69,43,40,0.045)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_24px_-14px_rgba(69,43,40,0.25)]"
+                className="group flex min-w-0 flex-col overflow-hidden rounded-[1rem] border border-border/80 bg-card text-left shadow-[0_2px_8px_rgba(69,43,40,0.045)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_24px_-14px_rgba(69,43,40,0.25)]"
               >
                 <button
                   type="button"
                   onClick={() => onSelect(item)}
                   aria-label={`Add ${item.name} to the order`}
-                  className="relative block aspect-[1.62/1] w-full overflow-hidden bg-[#F1E6D8] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  className="relative block aspect-[2.8/1] w-full overflow-hidden bg-[#F1E6D8] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   {item.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- menu images are uploaded to the configured backend host.
@@ -160,17 +170,17 @@ export function ProductGrid({
                   ) : (
                     <span className="block h-full w-full bg-cover transition-transform duration-300 group-hover:scale-[1.04]" style={menuFoodTile(item.name, index)} aria-hidden />
                   )}
-                  <span className="absolute left-2.5 top-2.5 rounded-full bg-[#FFFCF5]/90 px-2 py-1 text-[10px] font-semibold text-[#452B28] shadow-sm backdrop-blur">
+                  <span className="absolute left-2 top-2 rounded-full bg-[#FFFCF5]/90 px-2 py-1 text-[10px] font-semibold text-[#452B28] shadow-sm backdrop-blur">
                     {item.isVeg ? "Veg" : "Non-veg"}
                   </span>
                 </button>
-                <span className="flex min-h-[92px] w-full flex-1 flex-col justify-between gap-3 p-3 sm:p-3.5">
+                <span className="flex min-h-[70px] w-full flex-1 flex-col justify-between gap-1.5 p-2.5">
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-foreground sm:text-[15px]">{item.name}</span>
-                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">{item.category.name}</span>
+                    <span className="block truncate text-[13px] font-semibold leading-4 text-foreground">{item.name}</span>
+                    <span className="mt-0.5 block truncate text-[11px] leading-4 text-muted-foreground">{item.category.name}</span>
                   </span>
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold tabular-nums text-[#9B4A10]">{formatCurrency(item.price)}</span>
+                  <span className="flex flex-wrap items-center justify-between gap-x-1 gap-y-1">
+                    <span className="whitespace-nowrap text-xs font-bold tabular-nums text-[#9B4A10]">{formatCurrency(item.price)}</span>
                     {quantity > 0 ? (
                       <span className="inline-flex h-8 items-center rounded-full border border-border/80 bg-background p-0.5" aria-label={`${quantity} ${item.name} in order`}>
                         <button type="button" onClick={() => onRemoveOne(item.id)} aria-label={`Remove one ${item.name}`} className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -182,8 +192,8 @@ export function ProductGrid({
                         </button>
                       </span>
                     ) : (
-                      <button type="button" onClick={() => onSelect(item)} aria-label={`Add ${item.name} to the order`} className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#FE8C00] to-[#FF3B00] px-3 text-xs font-semibold text-white shadow-[0_4px_10px_rgba(254,140,0,0.22)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                        <Plus className="h-3.5 w-3.5" aria-hidden /> Add item
+                      <button type="button" onClick={() => onSelect(item)} aria-label={`Add ${item.name} to the order`} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#FE8C00] to-[#FF3B00] text-white shadow-[0_4px_10px_rgba(254,140,0,0.22)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        <Plus className="h-4 w-4" aria-hidden />
                       </button>
                     )}
                   </span>

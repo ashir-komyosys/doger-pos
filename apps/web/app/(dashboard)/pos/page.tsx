@@ -445,11 +445,11 @@ function PosPageInner() {
       )}
 
       <div className={cn(
-        "grid min-h-[520px] flex-1 grid-cols-[minmax(0,1fr)_64px] gap-4 overflow-visible lg:h-[calc(100dvh-19rem)] lg:overflow-hidden lg:flex-none",
+        "grid min-h-[480px] flex-1 grid-cols-1 gap-3 overflow-visible sm:gap-4 lg:h-[calc(100dvh-13rem)] lg:min-h-0 lg:overflow-hidden lg:flex-none",
         showTablePicker && "hidden xl:grid",
         orderType === "DINE_IN"
-          ? "lg:grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)_370px]"
-          : "lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_370px]",
+          ? "lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.85fr)] xl:grid-cols-[minmax(0,1.2fr)_76px_minmax(390px,1fr)] 2xl:grid-cols-[minmax(0,1.22fr)_84px_minmax(450px,1fr)]"
+          : "lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.8fr)]",
       )}>
           <Card className="min-h-0 overflow-hidden border-0 bg-transparent p-0 shadow-none">
             {showTablePicker ? (
