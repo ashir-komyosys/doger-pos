@@ -33,7 +33,7 @@ export function PosTableRail({
   const floor = floors.find((candidate) => candidate.id === floorId) ?? floors[0];
 
   return (
-    <aside className="hidden min-h-0 flex-col items-center gap-2 rounded-[1.25rem] border border-border/70 bg-card/70 p-2 xl:flex" aria-label="Choose a table">
+    <aside className="hidden min-h-0 min-w-0 flex-col items-center gap-2 overflow-hidden rounded-[1.25rem] border border-border/70 bg-card/70 p-2 xl:flex" aria-label="Choose a table">
       <span className="pt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Tables</span>
 
       {floors.length > 1 && (
@@ -47,7 +47,7 @@ export function PosTableRail({
         </select>
       )}
 
-      <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto py-1" role="group" aria-label="Tables on this floor">
+      <div className="pos-scrollbar-hidden flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-x-hidden overflow-y-auto py-1" role="group" aria-label="Tables on this floor">
         {isLoading && floors.length === 0 ? (
           <span role="status" className="py-3 text-center text-[10px] text-muted-foreground">Loading…</span>
         ) : error && floors.length === 0 ? (

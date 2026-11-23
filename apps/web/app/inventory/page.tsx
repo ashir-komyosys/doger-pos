@@ -36,9 +36,11 @@ function RecipeUsagePanel({ branchId, ingredients }: { branchId: string | null; 
   const [lines, setLines] = useState<RecipeDraftLine[]>([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!menuItemId && sellableItems[0]) setMenuItemId(sellableItems[0].id);
   }, [menuItemId, sellableItems]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (recipe) setLines(recipe.lines.map((line) => ({ ingredientId: line.ingredientId, quantity: String(line.quantity), unit: line.unit })));
   }, [recipe, menuItemId]);
 

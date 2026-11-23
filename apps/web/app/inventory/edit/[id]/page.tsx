@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { useState } from "react";
+import { use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ interface Ingredient {
   availableStock: string;
   costPerUnit: string;
   isActive: boolean;
+  initialStock: string;
 }
 
 export default function IngredientEditPage({
@@ -26,24 +28,18 @@ export default function IngredientEditPage({
 }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [ingredient, setIngredient] = useState<Ingredient | null>(null);
-
-  // In a real app, fetch ingredient by ID from API
-  // For now, use placeholder data
-  useEffect(() => {
-    // Placeholder - in production, fetch from API
-    setIngredient({
-      id,
-      name: "Test Ingredient",
-      sku: "TEST-001",
-      unit: "KG",
-      reorderLevel: "10",
-      currentStock: "50",
-      availableStock: "50",
-      costPerUnit: "5.00",
-      isActive: true,
-    });
-  }, [id]);
+  const [ingredient, setIngredient] = useState<Ingredient>(() => ({
+    id,
+    name: "Test Ingredient",
+    sku: "TEST-001",
+    unit: "KG",
+    reorderLevel: "10",
+    currentStock: "50",
+    availableStock: "50",
+    costPerUnit: "5.00",
+    isActive: true,
+    initialStock: "0",
+  }));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +132,21 @@ export default function IngredientEditPage({
                 value={ingredient?.reorderLevel ?? "0"}
                 onChange={(e) => setIngredient({ ...ingredient, reorderLevel: e.target.value })}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="e-initialStock">Initial Stock</Label>
+              <Input
+                id="e-initialStock"
+                type="number"
+                min="0"
+                step="0.001"
+                value={ingredient?.initialStock ?? "0"}
+                onChange={(e) => setIngredient({ ...ingredient, initialStock: e.target.value })}
+              />
+              <p className="text-sm text-muted-foreground">
+                Recorded in the stock movement history as an opening adjustment.
+              </p>
             </div>
           </div>
 

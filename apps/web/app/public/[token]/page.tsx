@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { BellRing, CheckCircle2, Leaf, Minus, Plus, UtensilsCrossed } from "lucide-react";
 import { use, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -216,9 +218,9 @@ export default function PublicPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
         <div className="absolute right-4 top-4">
-          <a href="/" className="text-xs text-muted-foreground underline">
+          <Link href="/" className="text-xs text-muted-foreground underline">
             &larr; Back
-          </a>
+          </Link>
         </div>
         {isLoading ? (
           <Skeleton className="h-7 w-40" />
@@ -271,9 +273,9 @@ export default function PublicPage({
               <p className="text-xs text-muted-foreground">{data?.restaurantName}</p>
             </div>
           </div>
-          <a href="/" className="text-xs text-muted-foreground underline">
+          <Link href="/" className="text-xs text-muted-foreground underline">
             &larr; Back
-          </a>
+          </Link>
         </div>
         <p className="text-sm text-muted-foreground">
           Browse the menu and place an order for {ORDER_TYPE_LABEL[orderType]}.

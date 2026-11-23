@@ -99,7 +99,7 @@ function OperationsDashboard() {
     { label: "Ready to serve", value: data.kitchen.ready, icon: Flame, href: "/kds" },
   ] : [];
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6 overflow-x-hidden">
       <div><h1 className="text-[32px] font-semibold tracking-tight text-foreground">Today</h1>
         <p className="text-sm text-muted-foreground">Your shift at a glance. Choose a task to keep service moving.</p></div>
       <BranchNotice />
@@ -131,7 +131,7 @@ function SalesDashboard({ canViewInventory }: { canViewInventory: boolean }) {
   const [viewingOrderId, setViewingOrderId] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6 overflow-x-hidden">
       <div>
         <h1 className="text-[32px] font-semibold tracking-tight text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Real-time overview of today&apos;s service</p>
