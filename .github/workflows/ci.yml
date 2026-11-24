@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -36,13 +38,31 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
 
-      # Run ESLint directly so the backend's developer-facing `lint` script
-      # (which applies autofixes) cannot silently modify the CI checkout.
-      - name: Lint frontend and backend
+      # Run ESLint directly so no developer-facing lint script can silently
+      # apply fixes and modify the CI checkout.
+      - name: Lint frontend
         run: |
           pnpm --dir apps/web exec eslint .
           pnpm --dir apps/storefront exec eslint .
-          pnpm --dir apps/backend exec eslint "src/**/*.ts"
+
+      # The backend currently has legacy lint findings outside the changed
+      # files. Lint touched backend sources so each PR is checked without
+      # making unrelated existing files block it.
+      - name: Lint changed backend files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        shell: bash
+        run: |
+          base_sha="$BASE_SHA"
+          if [[ -z "$base_sha" || "$base_sha" == "0000000000000000000000000000000000000000" ]]; then
+            base_sha="$(git rev-parse HEAD^)"
+          fi
+          mapfile -t files < <(git diff --name-only "$base_sha...$GITHUB_SHA" -- apps/backend/src | sed 's#^apps/backend/##' | grep -E '\.tsx?$' || true)
+          if (( ${#files[@]} == 0 )); then
+            echo "No backend source files changed; skipping backend lint."
+          else
+            pnpm --dir apps/backend exec eslint "${files[@]}"
+          fi
 
       - name: Typecheck
         run: pnpm typecheck

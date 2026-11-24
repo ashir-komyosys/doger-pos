@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import Link from "next/link";
 import { ArrowLeft, BookOpen, LogOut, Plus, Save, Send, Trash2 } from "lucide-react";
 import type { BlogPostDto, SessionUser } from "@nodedr-restaurant/types";
 
@@ -36,7 +37,7 @@ export function BlogManager() {
   const canManage = user?.permissions.includes("marketing.manage") ?? false;
   const selectedPost = useMemo(() => posts.find((post) => post.id === editingId), [posts, editingId]);
 
-  const loadSession = async () => {
+  const loadSession = useCallback(async () => {
     try {
       const session = await api<{ user: SessionUser }>("/auth/me");
       setUser(session.user);
@@ -47,14 +48,21 @@ export function BlogManager() {
     } catch {
       setUser(null);
     } finally { setLoading(false); }
-  };
+  }, []);
 
-  useEffect(() => { void loadSession(); }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadSession(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadSession]);
   useEffect(() => {
     if (!branchId || !canManage) return;
     localStorage.setItem("storefront-blog-branch", branchId);
-    setLoading(true);
-    api<BlogPost[]>(`/marketing/blog-posts?branchId=${encodeURIComponent(branchId)}`).then(setPosts).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load stories")).finally(() => setLoading(false));
+    let active = true;
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      api<BlogPost[]>(`/marketing/blog-posts?branchId=${encodeURIComponent(branchId)}`).then((data) => { if (active) setPosts(data); }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Could not load stories"); }).finally(() => { if (active) setLoading(false); });
+    }, 0);
+    return () => { active = false; window.clearTimeout(timer); };
   }, [branchId, canManage]);
 
   const login = async (event: FormEvent<HTMLFormElement>) => {
@@ -92,7 +100,7 @@ export function BlogManager() {
   };
 
   if (loading && !user) return <Shell><p className="text-sm text-[#80695e]">Loading secure journal editor…</p></Shell>;
-  if (!user) return <Shell><div className="mx-auto max-w-md border border-[#e6d6c2] bg-[#fffaf1] p-6 sm:p-8"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-full bg-[#35170f] text-[#f36a00]"><BookOpen className="h-5 w-5" /></span><div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#bd5000]">Staff access</p><h1 className="text-2xl font-black">Journal editor</h1></div></div><p className="mt-4 text-sm leading-6 text-[#80695e]">Sign in with your restaurant account. You need the Marketing permission to publish stories.</p><form onSubmit={login} className="mt-6 space-y-4"><label className="block text-sm font-semibold">Email<input required type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 h-11 w-full border border-[#e6d6c2] bg-white px-3 outline-none focus:border-[#f36a00]" /></label><label className="block text-sm font-semibold">Password<input required type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5 h-11 w-full border border-[#e6d6c2] bg-white px-3 outline-none focus:border-[#f36a00]" /></label>{error && <p role="alert" className="text-sm text-red-700">{error}</p>}<button disabled={busy} className="h-12 w-full bg-[#f36a00] font-bold text-white disabled:opacity-50">{busy ? "Signing in…" : "Sign in"}</button></form><a href="/" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#68483a]"><ArrowLeft className="h-4 w-4" /> Back to restaurant</a></div></Shell>;
+  if (!user) return <Shell><div className="mx-auto max-w-md border border-[#e6d6c2] bg-[#fffaf1] p-6 sm:p-8"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-full bg-[#35170f] text-[#f36a00]"><BookOpen className="h-5 w-5" /></span><div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#bd5000]">Staff access</p><h1 className="text-2xl font-black">Journal editor</h1></div></div><p className="mt-4 text-sm leading-6 text-[#80695e]">Sign in with your restaurant account. You need the Marketing permission to publish stories.</p><form onSubmit={login} className="mt-6 space-y-4"><label className="block text-sm font-semibold">Email<input required type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 h-11 w-full border border-[#e6d6c2] bg-white px-3 outline-none focus:border-[#f36a00]" /></label><label className="block text-sm font-semibold">Password<input required type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5 h-11 w-full border border-[#e6d6c2] bg-white px-3 outline-none focus:border-[#f36a00]" /></label>{error && <p role="alert" className="text-sm text-red-700">{error}</p>}<button disabled={busy} className="h-12 w-full bg-[#f36a00] font-bold text-white disabled:opacity-50">{busy ? "Signing in…" : "Sign in"}</button></form><Link href="/" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#68483a]"><ArrowLeft className="h-4 w-4" /> Back to restaurant</Link></div></Shell>;
   if (!canManage) return <Shell><div className="mx-auto max-w-xl border border-[#e6d6c2] bg-[#fffaf1] p-8"><h1 className="text-2xl font-black">Marketing access is required</h1><p className="mt-3 text-sm leading-6 text-[#80695e]">Ask an owner or administrator to grant the Marketing permission to your role.</p><button onClick={() => void signOut()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#bd5000]"><LogOut className="h-4 w-4" /> Sign out</button></div></Shell>;
 
   return <Shell><div className="mx-auto grid max-w-7xl gap-7 lg:grid-cols-[300px_minmax(0,1fr)]"><aside className="border border-[#e6d6c2] bg-[#fffaf1] p-5"><div className="flex items-start justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#bd5000]">Stories</p><h1 className="mt-1 text-xl font-black">Journal editor</h1></div><button aria-label="Sign out" title="Sign out" onClick={() => void signOut()} className="grid h-9 w-9 place-items-center border border-[#e6d6c2]"><LogOut className="h-4 w-4" /></button></div><label className="mt-5 block text-xs font-bold text-[#68483a]">Branch<select value={branchId} onChange={(e) => setBranchId(e.target.value)} className="mt-1.5 h-10 w-full border border-[#e6d6c2] bg-white px-2 text-sm">{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label><button onClick={openNew} className="mt-4 flex h-10 w-full items-center justify-center gap-2 bg-[#f36a00] text-sm font-bold text-white"><Plus className="h-4 w-4" /> New story</button><div className="mt-4 divide-y divide-[#eadcc9]">{posts.map((post) => <button key={post.id} onClick={() => editPost(post)} className={`w-full py-3 text-left ${editingId === post.id ? "text-[#bd5000]" : "text-[#321b16]"}`}><span className="block truncate text-sm font-bold">{post.title}</span><span className="mt-1 flex items-center gap-2 text-[10px] uppercase tracking-wide text-[#80695e]"><span className={`h-2 w-2 rounded-full ${post.status === "PUBLISHED" ? "bg-green-600" : "bg-[#c19a76]"}`} />{post.status === "PUBLISHED" ? "Published" : "Draft"}</span></button>)}</div>{!posts.length && !loading && <p className="mt-5 text-xs leading-5 text-[#80695e]">No stories yet. Write the first one.</p>}</aside>
@@ -104,5 +112,5 @@ function Field({ label, value, onChange, maxLength }: { label: string; value: st
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  return <main className="storefront-paper min-h-screen px-4 py-7 sm:px-7 sm:py-10"><div className="mx-auto mb-7 flex max-w-7xl items-center justify-between"><a href="/" className="flex items-center gap-2 text-sm font-black"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#35170f] text-[#f36a00]"><BookOpen className="h-4 w-4" /></span> DOGAR&apos;S JOURNAL</a><a href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-[#68483a]">View website <ArrowLeft className="h-4 w-4 rotate-180" /></a></div>{children}</main>;
+  return <main className="storefront-paper min-h-screen px-4 py-7 sm:px-7 sm:py-10"><div className="mx-auto mb-7 flex max-w-7xl items-center justify-between"><Link href="/" className="flex items-center gap-2 text-sm font-black"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#35170f] text-[#f36a00]"><BookOpen className="h-4 w-4" /></span> DOGAR&apos;S JOURNAL</Link><Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-[#68483a]">View website <ArrowLeft className="h-4 w-4 rotate-180" /></Link></div>{children}</main>;
 }
