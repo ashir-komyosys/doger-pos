@@ -13,6 +13,7 @@ FROM base AS deps
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json apps/backend/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY apps/storefront/package.json apps/storefront/package.json
 COPY packages/types/package.json packages/types/package.json
 RUN --mount=type=cache,id=pnpm-web,target=/root/.local/share/pnpm/store \
   pnpm install --frozen-lockfile \
@@ -31,6 +32,8 @@ ARG BACKEND_URL=http://backend:4000
 ENV BACKEND_URL=${BACKEND_URL}
 ARG NEXT_PUBLIC_PUBLIC_ORDER_TOKEN=
 ENV NEXT_PUBLIC_PUBLIC_ORDER_TOKEN=${NEXT_PUBLIC_PUBLIC_ORDER_TOKEN}
+ARG NEXT_PUBLIC_PUBLIC_STOREFRONT_ORIGIN=
+ENV NEXT_PUBLIC_PUBLIC_STOREFRONT_ORIGIN=${NEXT_PUBLIC_PUBLIC_STOREFRONT_ORIGIN}
 COPY packages/types packages/types
 COPY apps/web apps/web
 RUN --mount=type=cache,id=next-cache,target=/repo/apps/web/.next/cache \
@@ -41,6 +44,7 @@ RUN --mount=type=cache,id=next-cache,target=/repo/apps/web/.next/cache \
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
 
 # The standalone server (apps/web/server.js) resolves `public/` and
 # `.next/static` relative to ITS OWN traced monorepo path, i.e.

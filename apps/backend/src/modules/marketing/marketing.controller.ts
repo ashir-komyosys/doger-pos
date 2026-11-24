@@ -13,10 +13,14 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
+  blogPostSchema,
+  blogPostUpdateSchema,
   campaignSchema,
   couponSchema,
   promotionSchema,
   type CampaignDto,
+  type BlogPostDto,
+  type BlogPostUpdateDto,
   type CouponDto,
   type PromotionDto,
   type SessionUser,
@@ -41,6 +45,55 @@ export class MarketingController {
 
   private access(u: SessionUser, branchId: string) {
     return this.branchAccess.assertAccess(u, branchId);
+  }
+
+  @Auth('marketing.manage')
+  @Get('blog-posts')
+  async blogPosts(
+    @CurrentUser() u: SessionUser,
+    @Query('branchId') branchId: string,
+  ) {
+    await this.access(u, branchId);
+    return this.marketing.listBlogPosts(branchId);
+  }
+
+  @Auth('marketing.manage')
+  @AuditAction('blog_post.created', 'BlogPost')
+  @Post('blog-posts')
+  @UsePipes(new ZodValidationPipe(blogPostSchema))
+  async createBlogPost(
+    @CurrentUser() u: SessionUser,
+    @Query('branchId') branchId: string,
+    @Body() body: BlogPostDto,
+  ) {
+    await this.access(u, branchId);
+    return this.marketing.createBlogPost(branchId, body);
+  }
+
+  @Auth('marketing.manage')
+  @AuditAction('blog_post.updated', 'BlogPost')
+  @Patch('blog-posts/:id')
+  @UsePipes(new ZodValidationPipe(blogPostUpdateSchema))
+  async updateBlogPost(
+    @CurrentUser() u: SessionUser,
+    @Query('branchId') branchId: string,
+    @Param('id') id: string,
+    @Body() body: BlogPostUpdateDto,
+  ) {
+    await this.access(u, branchId);
+    return this.marketing.updateBlogPost(branchId, id, body);
+  }
+
+  @Auth('marketing.manage')
+  @AuditAction('blog_post.deleted', 'BlogPost')
+  @Delete('blog-posts/:id')
+  async deleteBlogPost(
+    @CurrentUser() u: SessionUser,
+    @Query('branchId') branchId: string,
+    @Param('id') id: string,
+  ) {
+    await this.access(u, branchId);
+    return this.marketing.deleteBlogPost(branchId, id);
   }
 
   @Auth('marketing.manage')

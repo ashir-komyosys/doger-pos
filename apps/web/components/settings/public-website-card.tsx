@@ -28,7 +28,7 @@ export function PublicWebsiteCard({
   const [confirmRotate, setConfirmRotate] = useState(false);
   const url =
     branch.publicToken && typeof window !== "undefined"
-      ? `${window.location.origin}/public/${branch.publicToken}`
+      ? `${(process.env.NEXT_PUBLIC_PUBLIC_STOREFRONT_ORIGIN || `${window.location.protocol}//${window.location.hostname}:2020`).replace(/\/$/, "")}/public/${branch.publicToken}`
       : null;
 
   const run = (action: "enable" | "rotate" | "disable", done: string) =>

@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type {
+  BlogPostDto,
+  BlogPostUpdateDto,
   CampaignDto,
   CouponDto,
   PromotionDto,
@@ -375,5 +377,72 @@ export class MarketingService {
       data: { lastSentAt: null, lastSentCount: null },
     });
     return new BadRequestException(message);
+  }
+
+  async listBlogPosts(branchId: string) {
+    return this.prisma.blogPost.findMany({
+      where: { branchId },
+      orderBy: [{ updatedAt: 'desc' }],
+    });
+  }
+
+  async createBlogPost(branchId: string, dto: BlogPostDto) {
+    const slug = dto.slug.toLowerCase();
+    const existing = await this.prisma.blogPost.findUnique({
+      where: { branchId_slug: { branchId, slug } },
+      select: { id: true },
+    });
+    if (existing) throw new ConflictException('That article URL is already in use');
+
+    const status = dto.status ?? 'DRAFT';
+    return this.prisma.blogPost.create({
+      data: {
+        ...dto,
+        slug,
+        status,
+        publishedAt: status === 'PUBLISHED' ? new Date() : null,
+        branchId,
+      },
+    });
+  }
+
+  async updateBlogPost(branchId: string, id: string, dto: BlogPostUpdateDto) {
+    const current = await this.prisma.blogPost.findFirst({
+      where: { id, branchId },
+    });
+    if (!current) throw new NotFoundException('Article not found');
+
+    const slug = dto.slug?.toLowerCase();
+    if (slug && slug !== current.slug) {
+      const existing = await this.prisma.blogPost.findUnique({
+        where: { branchId_slug: { branchId, slug } },
+        select: { id: true },
+      });
+      if (existing) throw new ConflictException('That article URL is already in use');
+    }
+
+    const status = dto.status ?? current.status;
+    return this.prisma.blogPost.update({
+      where: { id },
+      data: {
+        ...dto,
+        ...(slug ? { slug } : {}),
+        status,
+        publishedAt:
+          status === 'PUBLISHED'
+            ? current.publishedAt ?? new Date()
+            : null,
+      },
+    });
+  }
+
+  async deleteBlogPost(branchId: string, id: string) {
+    const current = await this.prisma.blogPost.findFirst({
+      where: { id, branchId },
+      select: { id: true },
+    });
+    if (!current) throw new NotFoundException('Article not found');
+    await this.prisma.blogPost.delete({ where: { id } });
+    return { ok: true };
   }
 }
