@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../../auth/auth.module';
 import { NotificationsModule } from '../../notifications/notifications.module';
 import { OrdersModule } from '../orders/orders.module';
 import { PublicKioskController } from './public-kiosk.controller';
@@ -9,7 +10,7 @@ import { PublicWebsiteController } from './public-website.controller';
 import { PublicWebsiteService } from './public-website.service';
 
 @Module({
-  imports: [OrdersModule, NotificationsModule],
+  imports: [OrdersModule, NotificationsModule, AuthModule],
   controllers: [
     PublicMenuController,
     PublicKioskController,

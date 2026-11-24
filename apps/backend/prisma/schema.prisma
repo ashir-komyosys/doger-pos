@@ -78,27 +78,29 @@ model Restaurant {
 }
 
 model Branch {
-  id                String             @id @default(cuid())
-  restaurantId      String
-  restaurant        Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  attendance        Attendance[]
-  deliveryZones     DeliveryZone[]
-  shifts            Shift[]
-  leaveRequests     LeaveRequest[]
-  payrollRuns       PayrollRun[]
-  expenses          Expense[]
-  budgets           Budget[]
-  bankTransactions  BankTransaction[]
-  reportSchedules   ReportSchedule[]
-  cashClosings      CashClosing[]
-  coupons           Coupon[]
-  promotions        Promotion[]
-  campaigns         Campaign[]
-  equipment         Equipment[]
-  documents         Document[]
-  verifactuSettings VerifactuSettings?
-  verifactuRecords  VerifactuRecord[]
-  storeStatusEvents StoreStatusEvent[]
+  id                     String                  @id @default(cuid())
+  restaurantId           String
+  restaurant             Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  attendance             Attendance[]
+  deliveryZones          DeliveryZone[]
+  shifts                 Shift[]
+  leaveRequests          LeaveRequest[]
+  payrollRuns            PayrollRun[]
+  expenses               Expense[]
+  budgets                Budget[]
+  bankTransactions       BankTransaction[]
+  reportSchedules        ReportSchedule[]
+  cashClosings           CashClosing[]
+  coupons                Coupon[]
+  promotions             Promotion[]
+  campaigns              Campaign[]
+  equipment              Equipment[]
+  documents              Document[]
+  verifactuSettings      VerifactuSettings?
+  verifactuRecords       VerifactuRecord[]
+  storeStatusEvents      StoreStatusEvent[]
+  blogPosts              BlogPost[]
+  publicCustomerAccounts PublicCustomerAccount[]
 
   name        String
   isStoreOpen Boolean @default(true)
@@ -676,10 +678,10 @@ model RecipeIngredient {
   ingredientId String
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
 
-  quantity  Decimal       @db.Decimal(12, 3)
+  quantity  Decimal         @db.Decimal(12, 3)
   unit      IngredientUnit?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@unique([menuItemId, ingredientId])
   @@index([menuItemId])
@@ -1229,12 +1231,30 @@ model Customer {
   marketingOptOut Boolean @default(false)
   walletBalance   Decimal @default(0) @db.Decimal(12, 2) // store credit
 
-  createdAt DateTime   @default(now())
-  orders    Order[]
-  giftCards GiftCard[]
+  createdAt     DateTime               @default(now())
+  orders        Order[]
+  giftCards     GiftCard[]
+  publicAccount PublicCustomerAccount?
 
   @@index([branchId, phone])
   @@map("customers")
+}
+
+// Separate from POS customer records so password hashes are never returned
+// by existing CRM list/detail endpoints.
+model PublicCustomerAccount {
+  id           String   @id @default(cuid())
+  branchId     String
+  branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  customerId   String   @unique
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  email        String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([branchId, email])
+  @@map("public_customer_accounts")
 }
 
 // ---------------------------------------------------------------------------
@@ -1295,6 +1315,32 @@ enum OrderType {
   QR_ORDER
   KIOSK
   PHONE
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id             String         @id @default(cuid())
+  branchId       String
+  branch         Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  title          String         @db.VarChar(140)
+  slug           String         @db.VarChar(140)
+  excerpt        String         @db.VarChar(320)
+  content        String         @db.Text
+  coverImageUrl  String?        @db.VarChar(2048)
+  seoTitle       String?        @db.VarChar(70)
+  seoDescription String?        @db.VarChar(170)
+  status         BlogPostStatus @default(DRAFT)
+  publishedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([branchId, slug])
+  @@index([branchId, status, publishedAt])
+  @@map("blog_posts")
 }
 
 enum OrderStatus {

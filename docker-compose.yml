@@ -60,6 +60,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
     # Not published to the host — reachable only via the web service's
     # server-side /api proxy, same reasoning as the sister project (keeps the API
     # off the LAN, shrinks attack surface).
@@ -117,13 +123,44 @@ services:
         # build ARG, not a runtime env (see apps/web/Dockerfile comment).
         BACKEND_URL: "http://backend:4000"
         NEXT_PUBLIC_PUBLIC_ORDER_TOKEN: "${NEXT_PUBLIC_PUBLIC_ORDER_TOKEN:-}"
+        NEXT_PUBLIC_PUBLIC_STOREFRONT_ORIGIN: "${NEXT_PUBLIC_PUBLIC_STOREFRONT_ORIGIN:-}"
     image: dff-web:${APP_VERSION:-dev}
     container_name: nodedr-restaurant-web
     restart: unless-stopped
     ports:
       - "${HOST_PORT:-2006}:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  storefront:
+    build:
+      context: .
+      dockerfile: apps/storefront/Dockerfile
+      args:
+        BACKEND_URL: "http://backend:4000"
+    image: dff-storefront:${APP_VERSION:-dev}
+    container_name: nodedr-restaurant-storefront
+    restart: unless-stopped
+    environment:
+      STOREFRONT_DEFAULT_TOKEN: "${STOREFRONT_DEFAULT_TOKEN:-${NEXT_PUBLIC_PUBLIC_ORDER_TOKEN:-}}"
+    ports:
+      - "${PUBLIC_HOST_PORT:-2020}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
 
 volumes:
   pg_data:

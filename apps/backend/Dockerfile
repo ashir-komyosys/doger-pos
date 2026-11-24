@@ -27,6 +27,7 @@ COPY apps/backend/package.json apps/backend/package.json
 # toolchain as well, lengthening the release build and expanding its supply
 # chain without putting any of those packages in the runtime image.
 COPY apps/web/package.json apps/web/package.json
+COPY apps/storefront/package.json apps/storefront/package.json
 COPY packages/types/package.json packages/types/package.json
 RUN --mount=type=cache,id=pnpm-backend,target=/root/.local/share/pnpm/store \
   pnpm install --frozen-lockfile \

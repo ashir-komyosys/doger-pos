@@ -2,8 +2,11 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import type { PublicWebsiteOrderDto } from '@nodedr-restaurant/types';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrdersService } from '../orders/orders.service';
@@ -26,6 +29,7 @@ export class PublicWebsiteService {
     private readonly prisma: PrismaService,
     private readonly ordersService: OrdersService,
     private readonly publicMenu: PublicMenuService,
+    private readonly jwt: JwtService,
   ) {}
 
   private async resolveBranch(publicToken: string) {
@@ -42,6 +46,58 @@ export class PublicWebsiteService {
     return branch;
   }
 
+  async registerCustomer(publicToken: string, data: { name: string; email: string; password: string }) {
+    const branch = await this.resolveBranch(publicToken);
+    const email = data.email.trim().toLowerCase();
+    if (await this.prisma.publicCustomerAccount.findUnique({ where: { branchId_email: { branchId: branch.id, email } } })) {
+      throw new BadRequestException('An account with this email already exists');
+    }
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    try {
+      const account = await this.prisma.$transaction(async (tx) => {
+        const customer = await tx.customer.create({ data: { branchId: branch.id, name: data.name.trim(), email } });
+        return tx.publicCustomerAccount.create({ data: { branchId: branch.id, customerId: customer.id, email, passwordHash }, include: { customer: true } });
+      });
+      return { token: await this.issueCustomerToken(account.id), user: { name: account.customer.name, email } };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new BadRequestException('An account with this email already exists');
+      throw error;
+    }
+  }
+
+  async loginCustomer(publicToken: string, data: { email: string; password: string }) {
+    const branch = await this.resolveBranch(publicToken);
+    const account = await this.prisma.publicCustomerAccount.findUnique({ where: { branchId_email: { branchId: branch.id, email: data.email.trim().toLowerCase() } }, include: { customer: true } });
+    if (!account || !(await bcrypt.compare(data.password, account.passwordHash))) throw new UnauthorizedException('Invalid email or password');
+    return { token: await this.issueCustomerToken(account.id), user: { name: account.customer.name, email: account.email } };
+  }
+
+  async getCustomerSession(publicToken: string, token: string) {
+    const branch = await this.resolveBranch(publicToken);
+    const payload = await this.verifyCustomerToken(token);
+    const account = await this.prisma.publicCustomerAccount.findFirst({ where: { id: payload.sub, branchId: branch.id }, include: { customer: true } });
+    if (!account) throw new UnauthorizedException('Session expired');
+    return { name: account.customer.name, email: account.email };
+  }
+
+  async createCustomerOrder(publicToken: string, token: string, dto: { clientRequestId: string; type: 'TAKEAWAY' | 'DELIVERY'; phone: string; delivery?: { address: string; pincode: string; phone: string }; items: PublicWebsiteOrderDto['items'] }) {
+    const branch = await this.resolveBranch(publicToken);
+    const payload = await this.verifyCustomerToken(token);
+    const account = await this.prisma.publicCustomerAccount.findFirst({ where: { id: payload.sub, branchId: branch.id }, include: { customer: true } });
+    if (!account) throw new UnauthorizedException('Session expired');
+    await this.prisma.customer.update({ where: { id: account.customerId }, data: { phone: dto.phone.trim(), ...(dto.type === 'DELIVERY' ? { address: dto.delivery?.address } : {}) } });
+    return this.createOrder(publicToken, { ...dto, guestName: account.customer.name ?? account.email, delivery: dto.type === 'DELIVERY' && dto.delivery ? { ...dto.delivery, phone: dto.phone } : undefined }, account.customerId);
+  }
+
+  private issueCustomerToken(accountId: string) { return this.jwt.signAsync({ sub: accountId, aud: 'storefront-customer' }, { expiresIn: '12h' }); }
+  private async verifyCustomerToken(token: string): Promise<{ sub: string }> {
+    try {
+      return await this.jwt.verifyAsync(token, { audience: 'storefront-customer' });
+    } catch {
+      throw new UnauthorizedException('Please sign in to continue');
+    }
+  }
+
   async getMenu(publicToken: string) {
     const branch = await this.resolveBranch(publicToken);
     const categories = await this.publicMenu.menuCategoriesForBranch(branch.id);
@@ -56,7 +112,45 @@ export class PublicWebsiteService {
     };
   }
 
-  async createOrder(publicToken: string, dto: PublicWebsiteOrderDto) {
+  async listJournal(publicToken: string) {
+    const branch = await this.resolveBranch(publicToken);
+    return this.prisma.blogPost.findMany({
+      where: { branchId: branch.id, status: 'PUBLISHED' },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+      take: 24,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        coverImageUrl: true,
+        seoTitle: true,
+        seoDescription: true,
+        publishedAt: true,
+      },
+    });
+  }
+
+  async getJournalArticle(publicToken: string, slug: string) {
+    const branch = await this.resolveBranch(publicToken);
+    const article = await this.prisma.blogPost.findFirst({
+      where: { branchId: branch.id, slug, status: 'PUBLISHED' },
+      select: {
+        title: true,
+        slug: true,
+        excerpt: true,
+        content: true,
+        coverImageUrl: true,
+        seoTitle: true,
+        seoDescription: true,
+        publishedAt: true,
+      },
+    });
+    if (!article) throw new NotFoundException('Article not found');
+    return article;
+  }
+
+  async createOrder(publicToken: string, dto: PublicWebsiteOrderDto, customerId?: string) {
     const branch = await this.resolveBranch(publicToken);
 
     // Retry of a submit we already completed: hand back the same order.
@@ -82,6 +176,7 @@ export class PublicWebsiteService {
           {
             type: dto.type,
             guestName: dto.guestName,
+            ...(customerId ? { customerId } : {}),
             ...(dto.type === 'DELIVERY'
               ? {
                   delivery: {
